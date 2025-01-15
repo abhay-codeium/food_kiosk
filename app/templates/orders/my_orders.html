@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}My Orders{% endblock %}
+
+{% block content %}
+<div class="orders-container">
+    <h1>My Orders</h1>
+    {% if orders %}
+        {% for order in orders %}
+            <div class="order-card">
+                <div class="order-header">
+                    <h3>Order #{{ order.id }}</h3>
+                    <span class="order-status {{ order.status }}">{{ order.status }}</span>
+                </div>
+                <div class="order-details">
+                    <p>Date: {{ order.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    <div class="order-items">
+                        {% for item in order.items %}
+                            <div class="order-item">
+                                <span>{{ item.menu_item.name }} x{{ item.quantity }}</span>
+                                <span>${{ "%.2f"|format(item.price_at_time * item.quantity) }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="order-total">
+                        <strong>Total:</strong>
+                        <span>${{ "%.2f"|format(order.total_amount) }}</span>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-orders">
+            <p>You haven't placed any orders yet.</p>
+            <a href="{{ url_for('menu.index') }}" class="button">View Menu</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

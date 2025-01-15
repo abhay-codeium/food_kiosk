@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="admin-container">
+        <h1>Admin Dashboard</h1>
+        
+        <div class="admin-section">
+            <h2>Menu Management</h2>
+            <button onclick="showAddItemForm()" class="admin-button">Add New Item</button>
+            <div id="menu-items">
+                <h3>Current Menu Items</h3>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Available</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in menu_items %}
+                        <tr>
+                            <td>{{ item.name }}</td>
+                            <td>{{ item.category }}</td>
+                            <td>${{ "%.2f"|format(item.price) }}</td>
+                            <td>{{ "Yes" if item.available else "No" }}</td>
+                            <td>
+                                <button onclick="editMenuItem({{ item.id }})" class="admin-button small">Edit</button>
+                                <button onclick="toggleAvailability({{ item.id }})" class="admin-button small">
+                                    {{ "Disable" if item.available else "Enable" }}
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="admin-section">
+            <h2>Order Management</h2>
+            <div id="orders">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Total Amount</th>
+                            <th>Status</th>
+                            <th>Time</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td>{{ order.id }}</td>
+                            <td>{{ order.customer.username }}</td>
+                            <td>${{ "%.2f"|format(order.total_amount) }}</td>
+                            <td>{{ order.status }}</td>
+                            <td>{{ order.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            <td>
+                                <button onclick="updateOrderStatus({{ order.id }}, 'completed')"
+                                        class="admin-button small"
+                                        {{ "disabled" if order.status == 'completed' }}>
+                                    Complete
+                                </button>
+                                <button onclick="updateOrderStatus({{ order.id }}, 'cancelled')"
+                                        class="admin-button small"
+                                        {{ "disabled" if order.status == 'cancelled' }}>
+                                    Cancel
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Item Modal -->
+    <div id="addItemModal" class="modal">
+        <div class="modal-content">
+            <h2>Add Menu Item</h2>
+            <form id="addItemForm">
+                <div class="form-group">
+                    <label for="name">Name:</label>
+                    <input type="text" id="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="category">Category:</label>
+                    <select id="category" required>
+                        <option value="burgers">Burgers</option>
+                        <option value="drinks">Drinks</option>
+                        <option value="sides">Sides</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="price">Price:</label>
+                    <input type="number" id="price" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description:</label>
+                    <textarea id="description"></textarea>
+                </div>
+                <button type="submit" class="admin-button">Add Item</button>
+                <button type="button" onclick="closeModal()" class="admin-button secondary">Cancel</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function showAddItemForm() {
+        document.getElementById('addItemModal').style.display = 'block';
+    }
+
+    function closeModal() {
+        document.getElementById('addItemModal').style.display = 'none';
+    }
+
+    document.getElementById('addItemForm').onsubmit = function(e) {
+        e.preventDefault();
+        const formData = {
+            name: document.getElementById('name').value,
+            category: document.getElementById('category').value,
+            price: parseFloat(document.getElementById('price').value),
+            description: document.getElementById('description').value
+        };
+
+        fetch('/admin/menu/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            location.reload();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error adding menu item');
+        });
+    };
+
+    function updateOrderStatus(orderId, status) {
+        fetch(`/admin/order/${orderId}/status`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status: status })
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            location.reload();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error updating order status');
+        });
+    }
+
+    function editMenuItem(itemId) {
+        // Implement edit functionality
+        alert('Edit functionality to be implemented');
+    }
+
+    function toggleAvailability(itemId) {
+        // Implement toggle availability functionality
+        alert('Toggle availability functionality to be implemented');
+    }
+</script>
+{% endblock %}

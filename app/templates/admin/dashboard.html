@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <div class="admin-section">
+        <h2>Menu Management</h2>
+        <button class="add-item-btn" onclick="showAddItemForm()">Add New Item</button>
+        <div class="menu-items-list">
+            {% for item in menu_items %}
+                <div class="menu-item-row">
+                    <div class="item-info">
+                        <h3>{{ item.name }}</h3>
+                        <p>{{ item.description }}</p>
+                        <p>${{ "%.2f"|format(item.price) }} - {{ item.category }}</p>
+                    </div>
+                    <div class="item-actions">
+                        <button onclick="editMenuItem({{ item.id }})">Edit</button>
+                        <button onclick="toggleAvailability({{ item.id }})">
+                            {{ 'Disable' if item.available else 'Enable' }}
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="admin-section">
+        <h2>Orders</h2>
+        <div class="orders-list">
+            {% for order in orders %}
+                <div class="order-row">
+                    <div class="order-info">
+                        <h3>Order #{{ order.id }}</h3>
+                        <p>Customer: {{ order.customer.username }}</p>
+                        <p>Total: ${{ "%.2f"|format(order.total_amount) }}</p>
+                        <p>Status: {{ order.status }}</p>
+                        <p>Date: {{ order.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    </div>
+                    <div class="order-actions">
+                        <select onchange="updateOrderStatus({{ order.id }}, this.value)">
+                            <option value="pending" {{ 'selected' if order.status == 'pending' }}>Pending</option>
+                            <option value="preparing" {{ 'selected' if order.status == 'preparing' }}>Preparing</option>
+                            <option value="ready" {{ 'selected' if order.status == 'ready' }}>Ready</option>
+                            <option value="completed" {{ 'selected' if order.status == 'completed' }}>Completed</option>
+                        </select>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+function showAddItemForm() {
+    // Implementation for showing add item form
+}
+
+function editMenuItem(itemId) {
+    // Implementation for editing menu item
+}
+
+function toggleAvailability(itemId) {
+    // Implementation for toggling item availability
+}
+
+function updateOrderStatus(orderId, status) {
+    fetch(`/admin/order/${orderId}/status`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: status })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to update order status');
+    });
+}
+</script>
+{% endblock %}

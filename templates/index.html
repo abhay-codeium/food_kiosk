@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container">
+        <header>
+            <h1>Welcome to Our Food Kiosk</h1>
+            <div class="user-nav">
+                {% if current_user.is_anonymous %}
+                    <a href="{{ url_for('login') }}" class="nav-button">Login</a>
+                    <a href="{{ url_for('register') }}" class="nav-button">Register</a>
+                {% else %}
+                    {% if current_user.is_admin %}
+                        <a href="{{ url_for('admin') }}" class="nav-button">Admin Dashboard</a>
+                    {% endif %}
+                    <a href="{{ url_for('my_orders') }}" class="nav-button">My Orders</a>
+                    <a href="{{ url_for('logout') }}" class="nav-button">Logout</a>
+                    <span class="welcome-text">Welcome, {{ current_user.username }}!</span>
+                {% endif %}
+            </div>
+        </header>
+
+        <div class="menu-container">
+            {% for category, items in menu.items() %}
+                <div class="menu-section">
+                    <h2>{{ category|title }}</h2>
+                    <div class="menu-items">
+                        {% for item in items %}
+                            <div class="menu-item">
+                                <div class="item-details">
+                                    <h3>{{ item.name }}</h3>
+                                    <p class="description">{{ item.description }}</p>
+                                    <p class="price">${{ "%.2f"|format(item.price) }}</p>
+                                </div>
+                                {% if current_user.is_authenticated %}
+                                    <button onclick="addToOrder({{ item.id }}, '{{ item.name }}', {{ item.price }})" class="add-button">
+                                        Add to Order
+                                    </button>
+                                {% else %}
+                                    <p class="login-prompt">Please <a href="{{ url_for('login') }}">login</a> to order</p>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if current_user.is_authenticated %}
+            <div class="order-summary">
+                <h2>Your Order</h2>
+                <div id="order-items"></div>
+                <div class="total">
+                    <span>Total:</span>
+                    <span id="total-amount">$0.00</span>
+                </div>
+                <button id="place-order" class="order-button">Place Order</button>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+{% endblock %}

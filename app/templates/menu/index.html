@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Menu{% endblock %}
+
+{% block content %}
+<div class="main-container">
+    <div class="welcome-banner">
+        <h1>Welcome to Our Food Kiosk</h1>
+        <p>Browse our menu and place your order below</p>
+    </div>
+
+    <div class="menu-container">
+        <div class="menu-sidebar">
+            <div class="category-tabs">
+                {% for category in menu.keys() %}
+                <button class="category-tab" data-category="{{ category }}">{{ category }}</button>
+                {% endfor %}
+            </div>
+            <div class="order-summary">
+                <h2>Your Order</h2>
+                <div id="order-items">
+                    <div class="empty-order">
+                        <p>Your order is empty</p>
+                        <p>Add items from the menu to get started</p>
+                    </div>
+                </div>
+                <div class="order-total">
+                    <span>Total:</span>
+                    <span id="total-amount">$0.00</span>
+                </div>
+                <button id="place-order" class="place-order-button" style="display: none;">Place Order</button>
+            </div>
+        </div>
+
+        <div class="menu-content">
+            {% for category, items in menu.items() %}
+            <div id="{{ category }}" class="menu-category" style="display: none;">
+                <h2 class="category-title">{{ category }}</h2>
+                <div class="menu-items">
+                    {% for item in items %}
+                    <div class="menu-item">
+                        <div class="item-details">
+                            <h3>{{ item.name }}</h3>
+                            <p class="description">{{ item.description }}</p>
+                            <p class="price">${{ "%.2f"|format(item.price) }}</p>
+                        </div>
+                        <button class="add-button" onclick="addToOrder({{ item.id }}, '{{ item.name }}', {{ item.price }})">Add to Order</button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Show first category by default
+    const firstTab = document.querySelector('.category-tab');
+    if (firstTab) {
+        firstTab.classList.add('active');
+        const firstCategory = firstTab.dataset.category;
+        showCategory(firstCategory);
+    }
+
+    // Add click handlers to category tabs
+    document.querySelectorAll('.category-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            showCategory(this.dataset.category);
+        });
+    });
+});
+
+function showCategory(category) {
+    document.querySelectorAll('.menu-category').forEach(cat => {
+        cat.style.display = cat.id === category ? 'block' : 'none';
+    });
+}
+</script>
+{% endblock %}
