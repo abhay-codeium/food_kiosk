@@ -1,14 +1,15 @@
-let orderItems = {};
-let currentOrder = {
+// Global state
+export let orderItems = {};
+export let currentOrder = {
     items: {},
     total: 0
 };
 
-function formatPrice(price) {
+export function formatPrice(price) {
     return '$' + price.toFixed(2);
 }
 
-function updateOrderSummary() {
+export function updateOrderSummary() {
     const orderItemsDiv = document.getElementById('order-items');
     orderItemsDiv.innerHTML = '';
     let total = 0;
@@ -52,7 +53,7 @@ function updateOrderSummary() {
     }
 }
 
-function updateQuantity(itemId, newQuantity) {
+export function updateQuantity(itemId, newQuantity) {
     if (newQuantity <= 0) {
         delete currentOrder.items[itemId];
     } else {
@@ -61,7 +62,7 @@ function updateQuantity(itemId, newQuantity) {
     updateOrderSummary();
 }
 
-function addToOrder(itemId, name, price) {
+export function addToOrder(itemId, name, price) {
     if (currentOrder.items[itemId]) {
         currentOrder.items[itemId].quantity += 1;
     } else {
@@ -77,7 +78,7 @@ function addToOrder(itemId, name, price) {
     showNotification(`Added ${name} to your order!`);
 }
 
-function showNotification(message) {
+export function showNotification(message) {
     const notification = document.createElement('div');
     notification.className = 'notification';
     notification.textContent = message;
@@ -87,6 +88,12 @@ function showNotification(message) {
     setTimeout(() => {
         notification.remove();
     }, 3000);
+}
+
+export function showCategory(category) {
+    document.querySelectorAll('.menu-category').forEach(cat => {
+        cat.style.display = cat.id === category ? 'block' : 'none';
+    });
 }
 
 // Initialize the page
@@ -141,9 +148,3 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-
-function showCategory(category) {
-    document.querySelectorAll('.menu-category').forEach(cat => {
-        cat.style.display = cat.id === category ? 'block' : 'none';
-    });
-}

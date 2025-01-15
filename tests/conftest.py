@@ -12,6 +12,9 @@ def app():
     """Create and configure a new app instance for each test."""
     app = create_app(TestConfig)
     
+    # Expose the database to the app instance
+    app.db = db
+    
     # Create the database and the database tables
     with app.app_context():
         db.create_all()
