@@ -1,36 +1,58 @@
 import pytest
-from app import create_app, db
-from config import Config
-
-class TestConfig(Config):
-    TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
-    WTF_CSRF_ENABLED = False
+from app import create_app
+from app.extensions import db
+from app.models import User, MenuItem
+from config import TestConfig
 
 @pytest.fixture
 def app():
-    """Create and configure a new app instance for each test."""
     app = create_app(TestConfig)
-    
-    # Expose the database to the app instance
-    app.db = db
-    
-    # Create the database and the database tables
-    with app.app_context():
-        db.create_all()
-    
-    yield app
-    
-    # Clean up
-    with app.app_context():
-        db.drop_all()
+    return app
 
 @pytest.fixture
 def client(app):
-    """A test client for the app."""
     return app.test_client()
 
 @pytest.fixture
 def runner(app):
-    """A test runner for the app's Click commands."""
     return app.test_cli_runner()
+
+@pytest.fixture
+def test_user(app):
+    with app.app_context():
+        user = User(username='test_user', email='test@example.com')
+        user.set_password('password123')
+        db.session.add(user)
+        db.session.commit()
+        return user.id
+
+@pytest.fixture
+def admin_user(app):
+    with app.app_context():
+        user = User(username='admin_test', email='admin@test.com')
+        user.set_password('password123')
+        user.is_admin = True
+        db.session.add(user)
+        db.session.commit()
+        return user.id
+
+@pytest.fixture
+def menu_items(app):
+    with app.app_context():
+        items = [
+            MenuItem(name='Burger', price=10.99, category='Main', description='Delicious burger', available=True),
+            MenuItem(name='Fries', price=4.99, category='Sides', description='Crispy fries', available=True),
+            MenuItem(name='Unavailable Item', price=5.99, category='Test', description='Test item', available=False)
+        ]
+        for item in items:
+            db.session.add(item)
+        db.session.commit()
+        return [item.id for item in items]
+
+@pytest.fixture(autouse=True)
+def cleanup(app):
+    yield
+    with app.app_context():
+        db.session.remove()
+        db.drop_all()
+        db.create_all()

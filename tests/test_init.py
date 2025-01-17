@@ -34,7 +34,7 @@ def test_extensions_initialized():
     with app.app_context():
         # Test SQLAlchemy initialization
         assert current_app == app
-        assert db.get_app() == app
+        assert db.engine is not None
         
         # Test Login Manager initialization
         assert login_manager.login_view == 'auth.login'

@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 from flask import Flask, render_template, request, jsonify, flash, redirect, url_for
 from flask_login import LoginManager, current_user, login_user, logout_user, login_required
 from werkzeug.urls import url_parse
@@ -146,7 +145,7 @@ def place_order():
     db.session.add(order)
     
     total_amount = 0
-    for item_id, details in data.items():
+    for item_id, details in list(data.items()):
         menu_item = MenuItem.query.get(int(item_id))
         if menu_item and menu_item.available:
             order_item = OrderItem(

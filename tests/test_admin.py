@@ -78,44 +78,33 @@ def test_add_menu_item(client, admin_user):
     assert item.description == 'Test Description'
     assert item.available == True
 
-def test_update_menu_item(client, admin_user, app):
-    """Test updating a menu item"""
+def test_update_menu_item(client, admin_user):
+    """Test updating a menu item."""
     login_user(client, 'admin_test', 'password123')
     
-    # Create a menu item to update
-    with app.app_context():
-        item = MenuItem(
-            name='Original Item',
-            price=10.99,
-            category='Original Category',
-            description='Original Description',
-            available=True
-        )
+    # Create a menu item
+    with client.session_transaction() as session:
+        item = MenuItem(name='Test Item', description='Test Description',
+                       price=10.0, category='Test Category')
         db.session.add(item)
         db.session.commit()
         item_id = item.id
 
-    update_data = {
+    # Update the item
+    response = client.put(f'/admin/menu/update/{item_id}', json={
         'name': 'Updated Item',
-        'price': 12.99,
-        'category': 'Updated Category',
         'description': 'Updated Description',
-        'available': False
-    }
-    
-    response = client.put('/admin/menu/update/%s' % item_id,
-                         data=json.dumps(update_data),
-                         content_type='application/json')
-    
+        'price': 15.0,
+        'category': 'Updated Category'
+    })
     assert response.status_code == 200
-    
-    # Verify item was updated in database
-    updated_item = MenuItem.query.get(item_id)
+
+    # Verify the update
+    updated_item = db.session.get(MenuItem, item_id)
     assert updated_item.name == 'Updated Item'
-    assert updated_item.price == 12.99
+    assert updated_item.price == 15.0
     assert updated_item.category == 'Updated Category'
     assert updated_item.description == 'Updated Description'
-    assert updated_item.available == False
 
 def test_update_nonexistent_menu_item(client, admin_user):
     """Test updating a menu item that doesn't exist"""

@@ -1,17 +1,14 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-import os
 from config import Config
+from app.extensions import db, login_manager
+from app.models import User
 
 # Initialize extensions
-db = SQLAlchemy()
-login_manager = LoginManager()
+login_manager.login_view = 'auth.login'
 
 @login_manager.user_loader
 def load_user(id):
-    from app.models import User
-    return User.query.get(int(id))
+    return db.session.get(User, int(id))
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -22,7 +19,6 @@ def create_app(config_class=Config):
     # Initialize extensions with app
     db.init_app(app)
     login_manager.init_app(app)
-    login_manager.login_view = 'auth.login'
     
     # Register blueprints
     from app.auth.routes import auth_bp
@@ -43,7 +39,6 @@ def create_app(config_class=Config):
     return app
 
 def init_admin():
-    from app.models import User
     admin = User.query.filter_by(username='admin').first()
     if not admin:
         admin = User(username='admin', email='admin@example.com')

@@ -1,6 +1,6 @@
 import pytest
 from app.auth.forms import LoginForm, RegistrationForm
-from app.models import User
+from app.models import User, db
 from wtforms.validators import ValidationError
 
 def test_valid_login_form(app):
@@ -59,34 +59,30 @@ def test_validate_username_unique(app):
     with app.app_context():
         # Create a user first
         user = User(username='existinguser', email='existing@example.com')
-        app.db.session.add(user)
-        app.db.session.commit()
+        db.session.add(user)
+        db.session.commit()
 
-        # Try to register with the same username
-        form = RegistrationForm(formdata=None)
+        form = RegistrationForm()
         form.username.data = 'existinguser'
         form.email.data = 'new@example.com'
         form.password.data = 'password123'
         form.password2.data = 'password123'
-        
-        with pytest.raises(ValidationError) as excinfo:
-            form.validate_username(form.username)
-        assert 'Please use a different username.' in str(excinfo.value)
+
+        assert not form.validate()
+        assert 'Please use a different username.' in form.username.errors
 
 def test_validate_email_unique(app):
     with app.app_context():
         # Create a user first
         user = User(username='testuser', email='existing@example.com')
-        app.db.session.add(user)
-        app.db.session.commit()
+        db.session.add(user)
+        db.session.commit()
 
-        # Try to register with the same email
-        form = RegistrationForm(formdata=None)
+        form = RegistrationForm()
         form.username.data = 'newuser'
         form.email.data = 'existing@example.com'
         form.password.data = 'password123'
         form.password2.data = 'password123'
-        
-        with pytest.raises(ValidationError) as excinfo:
-            form.validate_email(form.email)
-        assert 'Please use a different email address.' in str(excinfo.value)
+
+        assert not form.validate()
+        assert 'Please use a different email address.' in form.email.errors

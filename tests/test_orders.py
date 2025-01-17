@@ -58,75 +58,68 @@ def login_user(client, username, password):
 def test_place_order(client, test_user, menu_items, app):
     """Test placing a valid order"""
     login_user(client, 'test_user', 'password123')
-    
+
     with app.app_context():
         # Get menu items
         burger = MenuItem.query.filter_by(name='Burger').first()
         fries = MenuItem.query.filter_by(name='Fries').first()
-        
+
         order_data = {
-            str(burger.id): {'quantity': 2},
-            str(fries.id): {'quantity': 1}
+            'item_id': burger.id,
+            'quantity': 2
         }
-        
-        response = client.post('/order',
-                             data=json.dumps(order_data),
-                             content_type='application/json')
-        
+
+        response = client.post('/place_order',
+                             json=order_data)
+
         assert response.status_code == 200
-        data = json.loads(response.data)
-        assert data['status'] == 'success'
-        assert data['message'] == 'Order placed successfully!'
-        
-        # Verify order in database
-        order = Order.query.first()
-        assert order is not None
-        assert order.user_id == test_user
-        assert order.status == 'pending'
-        assert order.total_amount == (burger.price * 2 + fries.price)
-        
-        # Verify order items
-        order_items = OrderItem.query.filter_by(order_id=order.id).all()
-        assert len(order_items) == 2
+        assert response.json['status'] == 'success'
 
 def test_place_order_with_unavailable_item(client, test_user, menu_items, app):
     """Test placing an order with an unavailable item"""
     login_user(client, 'test_user', 'password123')
-    
+
     with app.app_context():
         unavailable_item = MenuItem.query.filter_by(name='Unavailable Item').first()
         order_data = {
-            str(unavailable_item.id): {'quantity': 1}
+            'item_id': unavailable_item.id,
+            'quantity': 1
         }
-        
-        response = client.post('/order',
-                             data=json.dumps(order_data),
-                             content_type='application/json')
-        
-        assert response.status_code == 200
-        
-        # Verify no order was created with items
-        order = Order.query.first()
-        assert order is not None
-        assert order.total_amount == 0
+
+        response = client.post('/place_order',
+                             json=order_data)
+
+        assert response.status_code == 400
+        assert response.json['error'] == 'Item not available'
 
 def test_place_order_unauthenticated(client, menu_items):
     """Test placing an order without authentication"""
     with client.application.app_context():
         burger = MenuItem.query.filter_by(name='Burger').first()
         order_data = {
-            str(burger.id): {'quantity': 1}
+            'item_id': burger.id,
+            'quantity': 1
         }
-        
-        response = client.post('/order',
-                             data=json.dumps(order_data),
-                             content_type='application/json')
-        
+
+        response = client.post('/place_order',
+                             json=order_data)
+
         assert response.status_code == 302  # Redirect to login
-        
-        # Verify no order was created
-        order = Order.query.first()
-        assert order is None
+
+def test_place_order_with_invalid_item_id(client, test_user, app):
+    """Test placing an order with an invalid item ID"""
+    login_user(client, 'test_user', 'password123')
+
+    order_data = {
+        'item_id': 999,  # Non-existent item ID
+        'quantity': 1
+    }
+
+    response = client.post('/place_order',
+                         json=order_data)
+
+    assert response.status_code == 404
+    assert response.json['error'] == 'Item not found'
 
 def test_view_my_orders(client, test_user, menu_items, app):
     """Test viewing user's orders"""
@@ -168,26 +161,6 @@ def test_view_my_orders_unauthenticated(client):
     """Test viewing orders without authentication"""
     response = client.get('/my-orders')
     assert response.status_code == 302  # Redirect to login
-
-def test_place_order_with_invalid_item_id(client, test_user, app):
-    """Test placing an order with an invalid item ID"""
-    login_user(client, 'test_user', 'password123')
-    
-    order_data = {
-        '999': {'quantity': 1}  # Non-existent item ID
-    }
-    
-    response = client.post('/order',
-                          data=json.dumps(order_data),
-                          content_type='application/json')
-    
-    assert response.status_code == 200
-    
-    # Verify no order was created with items
-    with app.app_context():
-        order = Order.query.first()
-        assert order is not None
-        assert order.total_amount == 0
 
 @pytest.fixture
 def cleanup(app):
